@@ -6,7 +6,7 @@ import (
 
 type Camera interface {
 	Render(Renderer, Entity)
-    Motion() pixel.Vec
+	Motion() pixel.Vec
 }
 
 type ChaseCamera struct {
@@ -31,5 +31,5 @@ func (c *ChaseCamera) Render(renderer Renderer, entity Entity) {
 }
 
 func (c *ChaseCamera) Motion() pixel.Vec {
-    return c.target.Velocity()
+	return c.target.Velocity()
 }

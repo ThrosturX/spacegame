@@ -16,14 +16,14 @@ type SpaceScene struct {
 }
 
 func NewSpaceScene(system *SolarSystem, player *Player, renderer Renderer) *SpaceScene {
-    camera := NewChaseCamera(player.Ship())
+	camera := NewChaseCamera(player.Ship())
 	return &SpaceScene{
 		camera:     camera,
 		system:     system,
 		playerShip: player.Ship(),
 		entities:   []Entity{player.Ship()},
 		renderer:   renderer,
-        starscape:  NewStarscape(renderer, camera),
+		starscape:  NewStarscape(renderer, camera),
 	}
 }
 
@@ -34,7 +34,7 @@ func (ss *SpaceScene) Render() {
 	ss.renderer.Clear()
 
 	// Starscape
-    ss.starscape.Render()
+	ss.starscape.Render()
 
 	// Render any planets in this scene
 	for _, celestial := range ss.system.Celestials() {
@@ -48,8 +48,8 @@ func (ss *SpaceScene) Render() {
 }
 
 func (ss *SpaceScene) tick(dt float64) {
-    // TODO: Beware dragons... hehe, learning opportunity
-    go ss.starscape.Displace(dt)
+	// TODO: Beware dragons... hehe, learning opportunity
+	go ss.starscape.Displace(dt)
 	// Everything gets translated by its velocity
 	for _, entity := range ss.entities {
 		entity.Translate(entity.Velocity())

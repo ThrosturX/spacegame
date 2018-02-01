@@ -9,11 +9,11 @@ import (
 
 // This may be a prototype for a "subwindow" interface...
 type Renderer interface {
-    Bounds() pixel.Rect
+	Bounds() pixel.Rect
 	Center() pixel.Vec
 	Clear()
 	Render(renderable Entity, position pixel.Vec)
-    ResourceManager() ResourceManager
+	ResourceManager() ResourceManager
 	Update()
 }
 
@@ -30,7 +30,7 @@ func NewPixelWindowRenderer(window *pixelgl.Window, resourceManager ResourceMana
 }
 
 func (pwr *PixelWindowRenderer) Bounds() pixel.Rect {
-     return pwr.window.Bounds()
+	return pwr.window.Bounds()
 }
 
 func (pwr *PixelWindowRenderer) Center() pixel.Vec {
@@ -50,9 +50,9 @@ func (pwr *PixelWindowRenderer) Render(renderable Entity, position pixel.Vec) {
 	resource := pwr.resourceManager.Resource(renderable)
 	sprite := resource.sprite
 
-    bounds := resource.Bounds()
-    unitScalerX, unitScalerY := 1 / bounds.W(), 1 / bounds.H()
-    rect := resource.Entity().Bounds()
+	bounds := resource.Bounds()
+	unitScalerX, unitScalerY := 1/bounds.W(), 1/bounds.H()
+	rect := resource.Entity().Bounds()
 
 	matrix := pixel.IM
 	matrix = matrix.ScaledXY(pixel.ZV, pixel.V(unitScalerX, unitScalerY))
@@ -62,9 +62,9 @@ func (pwr *PixelWindowRenderer) Render(renderable Entity, position pixel.Vec) {
 
 	sprite.Draw(pwr.window, matrix)
 }
- 
+
 func (pwr *PixelWindowRenderer) ResourceManager() ResourceManager {
-    return pwr.resourceManager
+	return pwr.resourceManager
 }
 
 func (pwr *PixelWindowRenderer) Update() {

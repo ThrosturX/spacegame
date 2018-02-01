@@ -16,7 +16,7 @@ import (
 type Resource struct {
 	entity      Entity
 	sprite      *pixel.Sprite
-    rect        pixel.Rect
+	rect        pixel.Rect
 	scaleFactor float64
 	collection  string
 }
@@ -26,7 +26,7 @@ func (r Resource) Entity() Entity {
 }
 
 func (r Resource) Bounds() pixel.Rect {
-    return r.rect
+	return r.rect
 }
 
 type ResourceManager interface {
@@ -255,8 +255,8 @@ func (srm *StandardResourceManager) Resource(renderable Entity) *Resource {
 
 func (srm *StandardResourceManager) createResource(pic pixel.Picture, entity Entity) Resource {
 	return Resource{
-		entity:      entity,
-		sprite:      pixel.NewSprite(pic, pic.Bounds()),
-        rect:        pic.Bounds(),
+		entity: entity,
+		sprite: pixel.NewSprite(pic, pic.Bounds()),
+		rect:   pic.Bounds(),
 	}
 }

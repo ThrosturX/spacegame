@@ -38,7 +38,7 @@ func (c Celestial) Angle() float64 {
 }
 
 func (c Celestial) Bounds() pixel.Rect {
-	return pixel.R(0.0, 0.0, 2 * c.radius, 2 * c.radius)
+	return pixel.R(0.0, 0.0, 2*c.radius, 2*c.radius)
 }
 
 func (c Celestial) Coordinates() pixel.Vec {

@@ -32,14 +32,14 @@ func NewGame() GameEngine {
 
 	window.SetSmooth(true)
 
-    resourceManager := NewStandardResourceManager("resources")
+	resourceManager := NewStandardResourceManager("resources")
 
 	universe := NewUniverse(resourceManager)
 
-    // TODO: Import(options GameOptions) 
-    resourceManager.ImportDefault()
+	// TODO: Import(options GameOptions)
+	resourceManager.ImportDefault()
 
-    // TODO: ctor won't need resourceManager
+	// TODO: ctor won't need resourceManager
 	player := NewPlayer("Cap'n Hector", resourceManager)
 
 	// select a suitable start location
@@ -50,7 +50,7 @@ func NewGame() GameEngine {
 		break
 	}
 
-    renderer := NewPixelWindowRenderer(window, resourceManager)
+	renderer := NewPixelWindowRenderer(window, resourceManager)
 
 	ge := GameEngine{
 		player:     player,
@@ -93,6 +93,6 @@ func (ge *GameEngine) Run() {
 
 func (ge *GameEngine) tick(dt float64) {
 	// Check key events and update game state
-    go ge.player.tick()
-    ge.scene.tick(dt)
+	go ge.player.tick()
+	ge.scene.tick(dt)
 }

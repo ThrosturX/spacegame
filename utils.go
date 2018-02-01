@@ -3,7 +3,7 @@ package spacegame
 import (
 	"image"
 	"os"
-     
+
 	_ "image/png" // apparently imported for side effects
 
 	"github.com/faiface/pixel"

@@ -12,16 +12,18 @@ func NewUniverse(rm ResourceManager) *Universe {
 	systems := make(map[string]*SolarSystem)
 	coordinates := make(map[string]pixel.Vec)
 
-    // TODO: This section comes from somewhere else
-    name := "Vera"
+	// TODO: This section comes from somewhere else
+	name := "Vera"
 	veraPlanet := NewCelestial(name, "images/planets/planet27.png", pixel.V(30, 60))
-//    rm.CreateResource(veraPlanet, "planets/planet27.png")
+	//    rm.CreateResource(veraPlanet, "planets/planet27.png")
 
 	veraSystem := NewSolarSystem(name, veraPlanet)
 
-    err := veraSystem.SaveToFile("resources/universe/systems/Vera.json")
-    if err != nil { panic(err) }
-    systems[name] = veraSystem
+	err := veraSystem.SaveToFile("resources/universe/systems/Vera.json")
+	if err != nil {
+		panic(err)
+	}
+	systems[name] = veraSystem
 	coordinates[name] = pixel.V(0, 0)
 
 	universe := Universe{

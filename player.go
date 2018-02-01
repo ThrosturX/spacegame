@@ -19,16 +19,16 @@ type Player struct {
 // Creates a new player with the specified name
 // The player is assigned a Starbridge and 10000 credits
 func NewPlayer(name string, resourceManager ResourceManager) *Player {
-    ship := NewShip("Starbridge")
-     
-    player := &Player{
+	ship := NewShip("Starbridge")
+
+	player := &Player{
 		name:    name,
 		ship:    ship,
 		credits: 10000,
 		cmdChan: make(chan action),
 	}
 
-    return player
+	return player
 }
 
 func (p *Player) Name() string {
