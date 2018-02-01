@@ -1,0 +1,8 @@
+{
+    "Name": "Starbridge",
+    "Acceleration": 3,
+    "MaxVel": 200,
+    "TurnSpeed": 3,
+    "Length": 32,
+    "Width": 32
+}

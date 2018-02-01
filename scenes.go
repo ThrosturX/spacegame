@@ -1,38 +1,57 @@
 package spacegame
 
-import "github.com/faiface/pixel"
-
 type Scene interface {
-	Render(Renderer)
+	Render()
+	tick(float64)
 }
 
 // TODO: Extract Ship into Player...
 type SpaceScene struct {
-	system         *SolarSystem
-	playerShip     *Ship
-	playerLocation pixel.Vec
+	renderer   Renderer
+	camera     Camera
+	system     *SolarSystem
+	playerShip *Ship
+	entities   []Entity
+	starscape  Background
 }
 
-func NewSpaceScene(system *SolarSystem, player *Player, playerLocation pixel.Vec) *SpaceScene {
+func NewSpaceScene(system *SolarSystem, player *Player, renderer Renderer) *SpaceScene {
+    camera := NewChaseCamera(player.Ship())
 	return &SpaceScene{
-		system:         system,
-		playerShip:     player.Ship(),
-		playerLocation: playerLocation,
+		camera:     camera,
+		system:     system,
+		playerShip: player.Ship(),
+		entities:   []Entity{player.Ship()},
+		renderer:   renderer,
+        starscape:  NewStarscape(renderer, camera),
 	}
 }
 
-func (ss *SpaceScene) Render(renderer Renderer) {
+func (ss *SpaceScene) Render() {
+	//
+
 	// Render the background
-	renderer.Clear()
-	// TODO: Starscape
+	ss.renderer.Clear()
+
+	// Starscape
+    ss.starscape.Render()
 
 	// Render any planets in this scene
-	for _, celestial := range ss.system.celestials {
-		renderer.Render(celestial, celestial.position)
+	for _, celestial := range ss.system.Celestials() {
+		ss.camera.Render(ss.renderer, celestial)
 	}
 
 	// Render the player's ship last, in the middle
-	renderer.Render(ss.playerShip, renderer.Center())
+	ss.renderer.Render(ss.playerShip, ss.renderer.Center())
 
-	renderer.Update()
+	ss.renderer.Update()
+}
+
+func (ss *SpaceScene) tick(dt float64) {
+    // TODO: Beware dragons... hehe, learning opportunity
+    go ss.starscape.Displace(dt)
+	// Everything gets translated by its velocity
+	for _, entity := range ss.entities {
+		entity.Translate(entity.Velocity())
+	}
 }

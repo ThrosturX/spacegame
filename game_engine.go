@@ -11,6 +11,7 @@ type GameEngine struct {
 	universe    *Universe
 	localSystem *SolarSystem
 	player      *Player
+	controller  *Controller
 	scene       Scene
 	window      *pixelgl.Window // REPLACE WITH EVENT MANAGER!!
 	renderer    Renderer
@@ -31,9 +32,15 @@ func NewGame() GameEngine {
 
 	window.SetSmooth(true)
 
-	universe := NewUniverse()
+    resourceManager := NewStandardResourceManager("resources")
 
-	player := NewPlayer("Cap'n Hector")
+	universe := NewUniverse(resourceManager)
+
+    // TODO: Import(options GameOptions) 
+    resourceManager.ImportDefault()
+
+    // TODO: ctor won't need resourceManager
+	player := NewPlayer("Cap'n Hector", resourceManager)
 
 	// select a suitable start location
 	var startSystem *SolarSystem
@@ -43,12 +50,15 @@ func NewGame() GameEngine {
 		break
 	}
 
+    renderer := NewPixelWindowRenderer(window, resourceManager)
+
 	ge := GameEngine{
-		player:   player,
-		universe: universe,
-		window:   window, // TODO: Event manager
-		renderer: NewPixelWindowRenderer(window, "resources/images"),
-		scene:    NewSpaceScene(startSystem, player, pixel.V(0, 0)),
+		player:     player,
+		controller: NewPlayerController(window, player),
+		universe:   universe,
+		window:     window, // TODO: Event manager
+		renderer:   renderer,
+		scene:      NewSpaceScene(startSystem, player, renderer),
 	}
 
 	return ge
@@ -65,11 +75,12 @@ func (ge *GameEngine) Run() {
 			break
 		}
 
+		go ge.controller.relay(dt)
 		ge.tick(dt)
 
 		// Render everything (refactor.. decouple)
 
-		ge.scene.Render(ge.renderer)
+		ge.scene.Render()
 
 		// Draw extra UI elements
 		// If extra UI elements...
@@ -82,14 +93,6 @@ func (ge *GameEngine) Run() {
 
 func (ge *GameEngine) tick(dt float64) {
 	// Check key events and update game state
-
-	var da float64
-	if ge.window.Pressed(pixelgl.KeyLeft) {
-		da = +3 * dt
-	} else if ge.window.Pressed(pixelgl.KeyRight) {
-		da = -3 * dt
-	}
-	if da != 0 {
-		ge.player.ship.Turn(da)
-	}
+    go ge.player.tick()
+    ge.scene.tick(dt)
 }

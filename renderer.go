@@ -7,28 +7,34 @@ import (
 	"github.com/faiface/pixel/pixelgl"
 )
 
+// This may be a prototype for a "subwindow" interface...
 type Renderer interface {
-    Center() pixel.Vec
+    Bounds() pixel.Rect
+	Center() pixel.Vec
 	Clear()
 	Render(renderable Entity, position pixel.Vec)
+    ResourceManager() ResourceManager
 	Update()
 }
 
-// TODO: Use a handle on the window from a controller
 type PixelWindowRenderer struct {
 	window          *pixelgl.Window
 	resourceManager ResourceManager
 }
 
-func NewPixelWindowRenderer(window *pixelgl.Window, baseResourcePath string) *PixelWindowRenderer {
+func NewPixelWindowRenderer(window *pixelgl.Window, resourceManager ResourceManager) *PixelWindowRenderer {
 	return &PixelWindowRenderer{
 		window:          window,
-		resourceManager: NewStandardResourceManager(baseResourcePath),
+		resourceManager: resourceManager,
 	}
 }
 
+func (pwr *PixelWindowRenderer) Bounds() pixel.Rect {
+     return pwr.window.Bounds()
+}
+
 func (pwr *PixelWindowRenderer) Center() pixel.Vec {
-    return pwr.window.Bounds().Center()
+	return pwr.window.Bounds().Center()
 }
 
 func (pwr *PixelWindowRenderer) Clear() {
@@ -36,19 +42,29 @@ func (pwr *PixelWindowRenderer) Clear() {
 }
 
 func (pwr *PixelWindowRenderer) Render(renderable Entity, position pixel.Vec) {
-    resource := pwr.resourceManager.Resource(renderable)
+	// return early if position is out of bounds
+	if pwr.window.Bounds().Intersect(renderable.Bounds().Moved(position)).Area() == 0 {
+		return
+	}
+
+	resource := pwr.resourceManager.Resource(renderable)
 	sprite := resource.sprite
 
-    scale := resource.Scale()
+    bounds := resource.Bounds()
+    unitScalerX, unitScalerY := 1 / bounds.W(), 1 / bounds.H()
+    rect := resource.Entity().Bounds()
 
-	// TODO: remove magic scale constant Vec
 	matrix := pixel.IM
-	matrix = matrix.ScaledXY(pixel.ZV, pixel.V(scale, scale))
+	matrix = matrix.ScaledXY(pixel.ZV, pixel.V(unitScalerX, unitScalerY))
+	matrix = matrix.ScaledXY(pixel.ZV, pixel.V(rect.W(), rect.H()))
 	matrix = matrix.Rotated(pixel.ZV, renderable.Angle())
-	//	fmt.Printf("Rendering %s at angle %v", renderable.Name(), renderable.Angle())
 	matrix = matrix.Moved(position)
 
 	sprite.Draw(pwr.window, matrix)
+}
+ 
+func (pwr *PixelWindowRenderer) ResourceManager() ResourceManager {
+    return pwr.resourceManager
 }
 
 func (pwr *PixelWindowRenderer) Update() {
