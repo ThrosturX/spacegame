@@ -2,18 +2,11 @@ package spacegame
 
 import "fmt"
 
-// TODO
-type Controllable interface {
-	CmdChan() chan action
-	Vessel() Entity
-	Process(action)
-}
-
 type Player struct {
 	name    string
-	ship    *Ship // change to Entity for fun?
+	ship    PilotableShip
 	credits uint64
-	cmdChan chan action
+	cmdChan chan pilotAction
 }
 
 // Creates a new player with the specified name
@@ -25,7 +18,7 @@ func NewPlayer(name string, resourceManager ResourceManager) *Player {
 		name:    name,
 		ship:    ship,
 		credits: 10000,
-		cmdChan: make(chan action),
+		cmdChan: make(chan pilotAction),
 	}
 
 	return player
@@ -36,10 +29,18 @@ func (p *Player) Name() string {
 }
 
 func (p *Player) Ship() *Ship {
-	return p.ship
+    var (
+        ship *Ship
+        ok bool
+    )
+    if ship, ok := p.ship.(*Ship); !ok {
+        panic("Wrong type for player ship")
+        return nil
+    }
+    return ship
 }
 
-func (p *Player) CmdChan() chan action {
+func (p *Player) CmdChan() chan pilotAction {
 	return p.cmdChan
 }
 
@@ -53,14 +54,13 @@ func (p *Player) tick() {
 	}
 }
 
-func (p *Player) Process(a action) {
+func (p *Player) Process(a pilotAction) {
 	fmt.Printf("Processing action %v\n", a)
 	switch a.key {
 	case actionAccel:
-		p.ship.thrusters(a.dt)
 	case actionTurnLeft:
-		p.ship.turn(a.dt)
 	case actionTurnRight:
-		p.ship.turn(-a.dt)
+    case actionTargetNext:
+        p.ship.CmdChan() <- a
 	}
 }

@@ -19,10 +19,10 @@ func NewUniverse(rm ResourceManager) *Universe {
 
 	veraSystem := NewSolarSystem(name, veraPlanet)
 
-	err := veraSystem.SaveToFile("resources/universe/systems/Vera.json")
-	if err != nil {
-		panic(err)
-	}
+////err := veraSystem.SaveToFile("resources/universe/systems/Vera.json")
+////if err != nil {
+////	panic(err)
+////}
 	systems[name] = veraSystem
 	coordinates[name] = pixel.V(0, 0)
 

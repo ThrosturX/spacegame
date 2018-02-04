@@ -1,3 +1,4 @@
+// TODO: Serialize this class to settings.json or something like that
 package spacegame
 
 import (
@@ -8,13 +9,18 @@ import (
 )
 
 const (
-	actionAccel     = "accel"
-	actionTurnLeft  = "left"
-	actionTurnRight = "right"
-	actionReverse   = "reverse"
+	actionAccel      = "accel"
+	actionTurnLeft   = "left"
+	actionTurnRight  = "right"
+	actionReverse    = "reverse"
+	actionTargetNext = "targetNext"
 )
 
-type action struct {
+type Controllable interface {
+	CmdChan() chan pilotAction
+}
+
+type pilotAction struct {
 	key string
 	dt  float64
 }
@@ -38,7 +44,7 @@ func NewPlayerController(window *pixelgl.Window, entity Controllable) *Controlle
 func (c *Controller) relay(dt float64) {
 	for key, cmd := range c.bindings {
 		if c.window.Pressed(pixelgl.Button(key)) {
-			c.entity.CmdChan() <- action{cmd, dt}
+			c.entity.CmdChan() <- pilotAction{cmd, dt}
 		}
 	}
 }
@@ -62,4 +68,5 @@ func (c *Controller) ResetBindings() {
 	c.SetKey(pixelgl.KeyLeft, actionTurnLeft)
 	c.SetKey(pixelgl.KeyRight, actionTurnRight)
 	c.SetKey(pixelgl.KeyDown, actionReverse)
+	c.SetKey(pixelgl.KeyTab, actionTargetNext)
 }

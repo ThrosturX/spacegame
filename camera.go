@@ -21,7 +21,6 @@ func NewChaseCamera(target Entity) *ChaseCamera {
 
 func (c *ChaseCamera) Render(renderer Renderer, entity Entity) {
 	// we have to transfer the entity from game space to screen space
-	// screen space is (game space) - (target xy)
 
 	offset := c.target.Coordinates().To(pixel.ZV)
 

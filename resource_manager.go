@@ -100,6 +100,7 @@ func (srm *StandardResourceManager) ImportDefault() {
 	shipImporter := func(path string, info os.FileInfo, err error) error {
 		// fail on error
 		if err != nil {
+            log.Println("err!")
 			return err
 		}
 

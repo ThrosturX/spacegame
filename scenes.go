@@ -27,6 +27,7 @@ func NewSpaceScene(system *SolarSystem, player *Player, renderer Renderer) *Spac
 	}
 }
 
+// TODO: Render with camera
 func (ss *SpaceScene) Render() {
 	//
 
@@ -36,10 +37,24 @@ func (ss *SpaceScene) Render() {
 	// Starscape
 	ss.starscape.Render()
 
+    // Directional arrow TODO
+
 	// Render any planets in this scene
 	for _, celestial := range ss.system.Celestials() {
 		ss.camera.Render(ss.renderer, celestial)
 	}
+
+    // Asteroids (if any) TODO
+
+
+    // Friendly players/NPCs TODO
+
+
+    // Projectiles TODO
+
+
+    // Neutral or enemy players/NPCs TODO
+
 
 	// Render the player's ship last, in the middle
 	ss.renderer.Render(ss.playerShip, ss.renderer.Center())
