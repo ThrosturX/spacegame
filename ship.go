@@ -10,33 +10,81 @@ import (
 
 // Defines interaction between pilot (player or AI) and ship
 type PilotableShip interface {
-	Process(pilotAction)                               // process input events
-	Config() ShipConfig                                // TODO: directly accessible methods to what is needed...
+	Process(pilotAction) // process input events
+	Serialize() SerializableShip
 	ActivateSystem(system string, command pilotAction) // TODO: Maybe return something?
-	CmdChan() chan pilotAction
 }
 
 // TODO: Ship systems...
 type ShipSystem interface {
 	Name() string
+    // Activate this system with a command
 	Activate(command pilotAction)
+    // Install this system on a ship
+    Install(ship *Ship)
 }
 
 type Ship struct {
+	name        string
 	angle       float64
 	coordinates pixel.Vec
 	velocity    pixel.Vec
 	bounds      pixel.Rect
-	cmdChan     chan pilotAction
-	ShipConfig
-	systems map[string]ShipSystem
+	systems     map[string]ShipSystem
 }
 
-type ShipConfig struct {
-	Name        string
-	Length      float64
-	Width       float64
-	ShipScanner Scanner
+type ShipSystems map[string]ShipSystem
+
+type SerializableShip struct {
+	Name    string
+	Length  float64
+	Width   float64
+	Systems ShipSystems
+}
+
+func (s ShipSystems) MarshalJSON() ([]byte, error) {
+	raw := map[string]struct {
+		Type   string
+		System interface{}
+	}{}
+	for name, sys := range s {
+		typ := sys.Name()
+		raw[name] = struct {
+			Type   string
+			System interface{}
+		}{
+			Type:   typ,
+			System: sys,
+		}
+	}
+	return json.Marshal(raw)
+}
+
+func (s ShipSystems) UnmarshalJSON(buf []byte) error {
+	raw := map[string]struct {
+		Type   string
+		System json.RawMessage
+	}{}
+	err := json.Unmarshal(buf, &raw)
+	if err != nil {
+		return err
+	}
+	for name := range s {
+		delete(s, name)
+	}
+	for name, rawsys := range raw {
+		var sys ShipSystem
+		switch rawsys.Type {
+		case "engine":
+			sys = &ShipEngine{}
+		}
+		err := json.Unmarshal(rawsys.System, sys)
+		if err != nil {
+			return err
+		}
+		s[name] = sys
+	}
+	return nil
 }
 
 type ShipEngine struct {
@@ -50,7 +98,7 @@ func (se ShipEngine) Name() string {
 	return "engine"
 }
 func (se ShipEngine) Activate(command pilotAction) {
-
+    log.Println("engine activate", command)
 	switch command.key {
 	case actionAccel:
 		se.Accelerate(command.dt)
@@ -59,6 +107,11 @@ func (se ShipEngine) Activate(command pilotAction) {
 	case actionTurnRight:
 		se.Turn(-command.dt)
 	}
+}
+
+func (se *ShipEngine) Install(ship *Ship) {
+    se.ship = ship
+    log.Println("engine installed on ship", ship.name)
 }
 
 func (se ShipEngine) Turn(dt float64) {
@@ -76,25 +129,45 @@ func (se ShipEngine) Accelerate(dt float64) {
 	se.ship.velocity = vel
 }
 
-// TODO: Put in some systems ?
-func DefaultShipConfig(name string) ShipConfig {
-	return ShipConfig{
-		Name: name,
-		////	Acceleration: 3.0,
-		////	MaxVel:       200.0,
-		////	TurnSpeed:    3.0,
-		////	Length:       32,
-		////	Width:        32,
+func DefaultShipEngine() *ShipEngine {
+	return &ShipEngine{
+		Acceleration: 3.0,
+		MaxVel:       200.0,
+		TurnSpeed:    3.0,
 	}
 }
 
+// TODO: Put in some systems ?
+func DefaultShipConfig(name string) SerializableShip {
+	return SerializableShip{
+		Name:    name,
+		Length:  32,
+		Width:   32,
+		Systems: DefaultShipSystems(),
+	}
+}
+
+func DefaultShipSystems() map[string]ShipSystem {
+	sysmap := make(map[string]ShipSystem)
+
+	sysmap["engine"] = DefaultShipEngine()
+
+	return sysmap
+}
+
 func NewShip(name string) *Ship {
-	return &Ship{
+    ship := &Ship{
+		name:        name,
 		angle:       0.0,
 		coordinates: pixel.V(0, 0),
+		velocity:    pixel.V(0, 0),
 		bounds:      pixel.R(0, 0, 32, 32),
-		ShipConfig:  DefaultShipConfig(name),
+		systems:     DefaultShipSystems(),
 	}
+    for _, system := range ship.systems {
+        system.Install(ship)
+    }
+    return ship
 }
 
 func LoadShip(path string) (*Ship, error) {
@@ -103,23 +176,32 @@ func LoadShip(path string) (*Ship, error) {
 		return nil, err
 	}
 
-	var shipConfig ShipConfig
+	var shipConfig SerializableShip
+	shipConfig.Systems = ShipSystems{}
 	decoder := json.NewDecoder(file)
 	decoder.Decode(&shipConfig)
+
+//	log.Println(shipConfig.Systems)
+
 	return shipConfig.load(), nil
 }
 
-func (config ShipConfig) load() *Ship {
+func (config SerializableShip) load() *Ship {
 	ship := &Ship{
+		name:        config.Name,
 		angle:       0.0,
 		coordinates: pixel.ZV,
 		bounds:      pixel.R(0, 0, config.Width, config.Length),
-		ShipConfig:  config,
+		systems:     config.Systems,
+	}
+
+	for _, sys := range ship.systems {
+		sys.Install(ship)
 	}
 	return ship
 }
 
-func (s *Ship) SaveToFile(path string) error {
+func (ss SerializableShip) SaveToFile(path string) error {
 	// TODO: Check if file exists?
 
 	file, err := os.Create(path)
@@ -127,18 +209,38 @@ func (s *Ship) SaveToFile(path string) error {
 		return err
 	}
 
+	//    var b bytes.Buffer
+
+//	log.Println(ss.Systems)
+
 	encoder := json.NewEncoder(file)
 	encoder.SetIndent("", "    ")
-	encoder.Encode(s.ShipConfig)
+	encoder.Encode(ss)
 	return nil
 }
 
-func (s *Ship) Config() ShipConfig {
-	return s.ShipConfig
+func (s *Ship) SaveToFile(path string) error {
+	// Create the Serializableship
+
+	ss := s.Serialize()
+
+	return ss.SaveToFile(path)
+}
+
+func (s *Ship) Serialize() SerializableShip {
+//	log.Println(s.name, s.systems)
+	ss := SerializableShip{
+		Name:    s.name,
+		Length:  s.bounds.Norm().H(),
+		Width:   s.bounds.Norm().W(),
+		Systems: s.systems,
+	}
+
+	return ss
 }
 
 func (s *Ship) Name() string {
-	return s.ShipConfig.Name
+	return s.name
 }
 
 func (s *Ship) Angle() float64 {
@@ -167,6 +269,7 @@ func (s *Ship) ActivateSystem(system string, command pilotAction) {
 
 	sys, ok := s.systems[system]
 	if !ok {
+		log.Printf("No system <%s> exists to process command <%s>\n", system, command.key)
 		// No such system
 		return
 	}
@@ -174,34 +277,41 @@ func (s *Ship) ActivateSystem(system string, command pilotAction) {
 	sys.Activate(command)
 }
 
-func (s *Ship) thrusters(dt float64) {
-	thrust := s.ShipConfig.Acceleration * dt
-	accelVec := pixel.V(0, thrust).Rotated(s.angle)
-	vel := s.velocity.Add(accelVec)
-	if vel.Len() > s.ShipConfig.MaxVel {
-		vel = vel.Unit().Scaled(s.ShipConfig.MaxVel)
-	}
-	s.velocity = vel
-	log.Println(s.velocity)
-}
-
-func (s *Ship) turn(dt float64) {
-	angle := s.ShipConfig.TurnSpeed * dt
-	s.angle += angle
-}
-
-func (s *Ship) CmdChan() chan pilotAction {
-	return s.cmdChan
-}
-
 func (s *Ship) Process(a pilotAction) {
-	switch a {
+	switch a.key {
 	case actionAccel:
+        fallthrough
 	case actionTurnLeft:
+        fallthrough
 	case actionTurnRight:
 		s.ActivateSystem("engine", a)
 	case actionTargetNext:
-		p.ship.ActivateSystem("scanner", a)
+		s.ActivateSystem("scanner", a)
 	}
 
 }
+
+// Custom marshaling
+
+// func (ss SerializableShip) MarshalJson() ([]byte, error) {
+//     return nil, nil
+// }
+
+// func (ss ShipSystems) MarshalJson() ([]byte, error) {
+// 	buffer := bytes.NewBufferString("{\n\"Systems\"")
+// 	length := len(ss)
+// 	count := 0
+// 	for key, value := range ss {
+// 		jsonValue, err := json.Marshal(value)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		buffer.WriteString(fmt.Sprintf("\"%s\":%s", key, string(jsonValue)))
+// 		count++
+// 		if count < length {
+// 			buffer.WriteString(",")
+// 		}
+// 	}
+// 	buffer.WriteString("}\n}")
+// 	return buffer.Bytes(), nil
+// }

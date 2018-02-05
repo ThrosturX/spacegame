@@ -86,8 +86,8 @@ func (srm *StandardResourceManager) FindInCollection(collection string) []Resour
 		}
 	}
 
-	log.Println("Created this beautiful collection for", collection)
-	log.Println(matched)
+//	log.Println("Created this beautiful collection for", collection)
+//	log.Println(matched)
 	return matched
 }
 
@@ -135,7 +135,7 @@ func (srm *StandardResourceManager) ImportDefault() {
 
 		srm.resources[name] = resource
 
-		log.Println("Imported", name)
+//		log.Println("Imported", name)
 
 		return nil
 	}
@@ -175,10 +175,10 @@ func (srm *StandardResourceManager) ImportDefault() {
 			resource.collection = collection
 
 			srm.resources[c.name] = resource
-			log.Println("Imported", c.name)
+//			log.Println("Imported", c.name)
 		}
 
-		log.Println("Imported", sys.name)
+//		log.Println("Imported", sys.name)
 
 		return nil
 	}
@@ -214,7 +214,7 @@ func (srm *StandardResourceManager) ImportDefault() {
 
 		srm.resources[name] = resource
 
-		log.Println("Imported", name)
+//		log.Println("Imported", name)
 
 		return nil
 	}

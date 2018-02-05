@@ -33,7 +33,7 @@ func (p *Player) Ship() *Ship {
         ship *Ship
         ok bool
     )
-    if ship, ok := p.ship.(*Ship); !ok {
+    if ship, ok = p.ship.(*Ship); !ok {
         panic("Wrong type for player ship")
         return nil
     }
@@ -55,12 +55,15 @@ func (p *Player) tick() {
 }
 
 func (p *Player) Process(a pilotAction) {
-	fmt.Printf("Processing action %v\n", a)
 	switch a.key {
 	case actionAccel:
+        fallthrough
 	case actionTurnLeft:
+        fallthrough
 	case actionTurnRight:
+        fallthrough
     case actionTargetNext:
-        p.ship.CmdChan() <- a
+        fmt.Printf("Processing action %v\n", a)
+        p.ship.Process(a)
 	}
 }

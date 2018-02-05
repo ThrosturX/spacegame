@@ -17,7 +17,7 @@ const (
 )
 
 type Controllable interface {
-	CmdChan() chan pilotAction
+	Process(pilotAction)
 }
 
 type pilotAction struct {
@@ -44,7 +44,7 @@ func NewPlayerController(window *pixelgl.Window, entity Controllable) *Controlle
 func (c *Controller) relay(dt float64) {
 	for key, cmd := range c.bindings {
 		if c.window.Pressed(pixelgl.Button(key)) {
-			c.entity.CmdChan() <- pilotAction{cmd, dt}
+			c.entity.Process(pilotAction{cmd, dt})
 		}
 	}
 }

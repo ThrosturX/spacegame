@@ -65,8 +65,16 @@ func (ss *SpaceScene) Render() {
 func (ss *SpaceScene) tick(dt float64) {
 	// TODO: Beware dragons... hehe, learning opportunity
 	go ss.starscape.Displace(dt)
-	// Everything gets translated by its velocity
+
+
 	for _, entity := range ss.entities {
+        // all pilotable ships get updated
+        if ship, ok := entity.(PilotableShip) ; ok {
+            _ = ship
+            // ship.Update()
+        }
+
+        // Everything gets translated by its velocity
 		entity.Translate(entity.Velocity())
 	}
 }
