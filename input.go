@@ -9,11 +9,14 @@ import (
 )
 
 const (
-	actionAccel      = "accel"
-	actionTurnLeft   = "left"
-	actionTurnRight  = "right"
-	actionReverse    = "reverse"
-	actionTargetNext = "targetNext"
+	actionAccel           = "accel"
+	actionTurnLeft        = "left"
+	actionTurnRight       = "right"
+	actionReverse         = "reverse"
+    actionAlign           = "align"
+	actionTargetPrev      = "targetPrev"
+	actionTargetNext      = "targetNext"
+	actionTargetCelestial = "targetCelestial"
 )
 
 type Controllable interface {
@@ -27,9 +30,10 @@ type pilotAction struct {
 
 type Controller struct {
 	// map keybind -> action key
-	bindings map[int]string
-	entity   Controllable
-	window   *pixelgl.Window
+	bindings  map[int]string
+	entity    Controllable
+	window    *pixelgl.Window
+	repeaters map[string]bool
 }
 
 func NewPlayerController(window *pixelgl.Window, entity Controllable) *Controller {
@@ -38,12 +42,31 @@ func NewPlayerController(window *pixelgl.Window, entity Controllable) *Controlle
 		window: window,
 	}
 	c.ResetBindings()
+	c.repeaters = make(map[string]bool)
+	c.repeaters[actionAccel] = true
+	c.repeaters[actionAlign] = true
+	c.repeaters[actionTurnLeft] = true
+	c.repeaters[actionTurnRight] = true
+	c.repeaters[actionReverse] = true
+	c.repeaters[actionTargetPrev] = false
+	c.repeaters[actionTargetNext] = false
+	c.repeaters[actionTargetCelestial] = false
+
 	return c
 }
 
 func (c *Controller) relay(dt float64) {
 	for key, cmd := range c.bindings {
-		if c.window.Pressed(pixelgl.Button(key)) {
+		var pressFunc func(pixelgl.Button) bool
+		repeater, ok := c.repeaters[cmd]
+
+		if !ok || !repeater {
+			pressFunc = c.window.JustPressed
+		} else {
+			pressFunc = c.window.Pressed
+		}
+
+		if pressFunc(pixelgl.Button(key)) {
 			c.entity.Process(pilotAction{cmd, dt})
 		}
 	}
@@ -69,4 +92,7 @@ func (c *Controller) ResetBindings() {
 	c.SetKey(pixelgl.KeyRight, actionTurnRight)
 	c.SetKey(pixelgl.KeyDown, actionReverse)
 	c.SetKey(pixelgl.KeyTab, actionTargetNext)
+	//	c.SetKey(pixelgl._, actionTargetPrev)
+	c.SetKey(pixelgl.KeyA, actionAlign)
+	c.SetKey(pixelgl.KeyL, actionTargetCelestial)
 }

@@ -17,7 +17,7 @@ func NewUniverse(rm ResourceManager) *Universe {
 	veraPlanet := NewCelestial(name, "images/planets/planet27.png", pixel.V(30, 60))
 	//    rm.CreateResource(veraPlanet, "planets/planet27.png")
 
-	veraSystem := NewSolarSystem(name, veraPlanet)
+	veraSystem := NewSolarSystem(name, &veraPlanet)
 
 ////err := veraSystem.SaveToFile("resources/universe/systems/Vera.json")
 ////if err != nil {

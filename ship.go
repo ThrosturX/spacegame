@@ -13,15 +13,7 @@ type PilotableShip interface {
 	Process(pilotAction) // process input events
 	Serialize() SerializableShip
 	ActivateSystem(system string, command pilotAction) // TODO: Maybe return something?
-}
-
-// TODO: Ship systems...
-type ShipSystem interface {
-	Name() string
-    // Activate this system with a command
-	Activate(command pilotAction)
-    // Install this system on a ship
-    Install(ship *Ship)
+	Update(info SceneInformation)
 }
 
 type Ship struct {
@@ -33,108 +25,11 @@ type Ship struct {
 	systems     map[string]ShipSystem
 }
 
-type ShipSystems map[string]ShipSystem
-
 type SerializableShip struct {
 	Name    string
 	Length  float64
 	Width   float64
 	Systems ShipSystems
-}
-
-func (s ShipSystems) MarshalJSON() ([]byte, error) {
-	raw := map[string]struct {
-		Type   string
-		System interface{}
-	}{}
-	for name, sys := range s {
-		typ := sys.Name()
-		raw[name] = struct {
-			Type   string
-			System interface{}
-		}{
-			Type:   typ,
-			System: sys,
-		}
-	}
-	return json.Marshal(raw)
-}
-
-func (s ShipSystems) UnmarshalJSON(buf []byte) error {
-	raw := map[string]struct {
-		Type   string
-		System json.RawMessage
-	}{}
-	err := json.Unmarshal(buf, &raw)
-	if err != nil {
-		return err
-	}
-	for name := range s {
-		delete(s, name)
-	}
-	for name, rawsys := range raw {
-		var sys ShipSystem
-		switch rawsys.Type {
-		case "engine":
-			sys = &ShipEngine{}
-		}
-		err := json.Unmarshal(rawsys.System, sys)
-		if err != nil {
-			return err
-		}
-		s[name] = sys
-	}
-	return nil
-}
-
-type ShipEngine struct {
-	Acceleration float64
-	MaxVel       float64
-	TurnSpeed    float64
-	ship         *Ship
-}
-
-func (se ShipEngine) Name() string {
-	return "engine"
-}
-func (se ShipEngine) Activate(command pilotAction) {
-    log.Println("engine activate", command)
-	switch command.key {
-	case actionAccel:
-		se.Accelerate(command.dt)
-	case actionTurnLeft:
-		se.Turn(command.dt)
-	case actionTurnRight:
-		se.Turn(-command.dt)
-	}
-}
-
-func (se *ShipEngine) Install(ship *Ship) {
-    se.ship = ship
-    log.Println("engine installed on ship", ship.name)
-}
-
-func (se ShipEngine) Turn(dt float64) {
-	angle := se.TurnSpeed * dt
-	se.ship.angle += angle
-}
-
-func (se ShipEngine) Accelerate(dt float64) {
-	thrust := se.Acceleration * dt
-	accelVec := pixel.V(0, thrust).Rotated(se.ship.angle)
-	vel := se.ship.velocity.Add(accelVec)
-	if vel.Len() > se.MaxVel {
-		vel = vel.Unit().Scaled(se.MaxVel)
-	}
-	se.ship.velocity = vel
-}
-
-func DefaultShipEngine() *ShipEngine {
-	return &ShipEngine{
-		Acceleration: 3.0,
-		MaxVel:       200.0,
-		TurnSpeed:    3.0,
-	}
 }
 
 // TODO: Put in some systems ?
@@ -147,16 +42,8 @@ func DefaultShipConfig(name string) SerializableShip {
 	}
 }
 
-func DefaultShipSystems() map[string]ShipSystem {
-	sysmap := make(map[string]ShipSystem)
-
-	sysmap["engine"] = DefaultShipEngine()
-
-	return sysmap
-}
-
 func NewShip(name string) *Ship {
-    ship := &Ship{
+	ship := &Ship{
 		name:        name,
 		angle:       0.0,
 		coordinates: pixel.V(0, 0),
@@ -164,10 +51,10 @@ func NewShip(name string) *Ship {
 		bounds:      pixel.R(0, 0, 32, 32),
 		systems:     DefaultShipSystems(),
 	}
-    for _, system := range ship.systems {
-        system.Install(ship)
-    }
-    return ship
+	for _, system := range ship.systems {
+		system.Install(ship)
+	}
+	return ship
 }
 
 func LoadShip(path string) (*Ship, error) {
@@ -181,7 +68,7 @@ func LoadShip(path string) (*Ship, error) {
 	decoder := json.NewDecoder(file)
 	decoder.Decode(&shipConfig)
 
-//	log.Println(shipConfig.Systems)
+	//	log.Println(shipConfig.Systems)
 
 	return shipConfig.load(), nil
 }
@@ -211,8 +98,6 @@ func (ss SerializableShip) SaveToFile(path string) error {
 
 	//    var b bytes.Buffer
 
-//	log.Println(ss.Systems)
-
 	encoder := json.NewEncoder(file)
 	encoder.SetIndent("", "    ")
 	encoder.Encode(ss)
@@ -228,7 +113,6 @@ func (s *Ship) SaveToFile(path string) error {
 }
 
 func (s *Ship) Serialize() SerializableShip {
-//	log.Println(s.name, s.systems)
 	ss := SerializableShip{
 		Name:    s.name,
 		Length:  s.bounds.Norm().H(),
@@ -277,41 +161,55 @@ func (s *Ship) ActivateSystem(system string, command pilotAction) {
 	sys.Activate(command)
 }
 
+// TODO: Refactor
 func (s *Ship) Process(a pilotAction) {
 	switch a.key {
 	case actionAccel:
-        fallthrough
+		fallthrough
 	case actionTurnLeft:
-        fallthrough
+		fallthrough
 	case actionTurnRight:
 		s.ActivateSystem("engine", a)
+
+	case actionTargetCelestial:
+		fallthrough
 	case actionTargetNext:
 		s.ActivateSystem("scanner", a)
-	}
 
+	case actionAlign:
+		var (
+			scanner *ShipScanner
+			engine  *ShipEngine
+			target  Entity
+			ok      bool
+		)
+		scanner, ok = s.systems["scanner"].(*ShipScanner)
+		if !ok {
+			return
+		}
+		engine, ok = s.systems["engine"].(*ShipEngine)
+		if !ok {
+			return
+		}
+		target = scanner.Target()
+		log.Println("TARGET", target)
+		// no target, face celestial
+		if target == nil {
+			target = scanner.Celestial()
+			log.Println("TARGET", target, "target was nil")
+		}
+		if target == (*Celestial)(nil){
+			log.Println("NO TARGET")
+			return // nothing to align to // TODO: Maybe align to sun/origin?
+		}
+		log.Println("TARGET", target)
+		engine.Align(target, a.dt)
+		log.Println("Found target", (target).Name(), "at", (target).Coordinates())
+	}
 }
 
-// Custom marshaling
-
-// func (ss SerializableShip) MarshalJson() ([]byte, error) {
-//     return nil, nil
-// }
-
-// func (ss ShipSystems) MarshalJson() ([]byte, error) {
-// 	buffer := bytes.NewBufferString("{\n\"Systems\"")
-// 	length := len(ss)
-// 	count := 0
-// 	for key, value := range ss {
-// 		jsonValue, err := json.Marshal(value)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 		buffer.WriteString(fmt.Sprintf("\"%s\":%s", key, string(jsonValue)))
-// 		count++
-// 		if count < length {
-// 			buffer.WriteString(",")
-// 		}
-// 	}
-// 	buffer.WriteString("}\n}")
-// 	return buffer.Bytes(), nil
-// }
+func (s *Ship) Update(info SceneInformation) {
+	for _, sys := range s.systems {
+		sys.Update(info)
+	}
+}

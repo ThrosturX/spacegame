@@ -53,7 +53,7 @@ func (c Celestial) Translate(by pixel.Vec) {
 	c.position = c.position.Add(by)
 }
 
-type CelestialCollection []Celestial
+type CelestialCollection []*Celestial
 
 type CelestialConfig struct {
 	Name      string
@@ -80,7 +80,7 @@ func (cs CelestialCollection) Config() []CelestialConfig {
 
 type SolarSystem struct {
 	name       string
-	celestials []Celestial
+	celestials []*Celestial
 }
 
 type SolarSystemConfig struct {
@@ -95,7 +95,7 @@ func (s SolarSystem) Config() SolarSystemConfig {
 	}
 }
 
-func NewSolarSystem(name string, celestials ...Celestial) *SolarSystem {
+func NewSolarSystem(name string, celestials ...*Celestial) *SolarSystem {
 	s := SolarSystem{
 		name:       name,
 		celestials: celestials,
@@ -116,11 +116,11 @@ func LoadSystem(path string) (*SolarSystem, error) {
 }
 
 func (config SolarSystemConfig) load() *SolarSystem {
-	var celestials []Celestial
+	var celestials []*Celestial
 
 	for _, c := range config.Celestials {
 		celestial := NewCelestial(c.Name, c.ImagePath, c.Position)
-		celestials = append(celestials, celestial)
+		celestials = append(celestials, &celestial)
 	}
 
 	system := &SolarSystem{
@@ -146,6 +146,6 @@ func (s SolarSystem) Name() string {
 	return s.name
 }
 
-func (s SolarSystem) Celestials() []Celestial {
+func (s SolarSystem) Celestials() []*Celestial {
 	return s.celestials
 }

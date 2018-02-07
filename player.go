@@ -56,13 +56,7 @@ func (p *Player) tick() {
 
 func (p *Player) Process(a pilotAction) {
 	switch a.key {
-	case actionAccel:
-        fallthrough
-	case actionTurnLeft:
-        fallthrough
-	case actionTurnRight:
-        fallthrough
-    case actionTargetNext:
+    default:
         fmt.Printf("Processing action %v\n", a)
         p.ship.Process(a)
 	}

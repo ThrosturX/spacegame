@@ -1,6 +1,7 @@
 package spacegame
 
 import (
+	"encoding/json"
 	"log"
 	"reflect"
 	"testing"
@@ -32,8 +33,8 @@ func TestSerialization(t *testing.T) {
 
 	// Compare them
 	if !reflect.DeepEqual(ss1, ss2) {
-        log.Println(ss1.Systems["engine"])
-        log.Println(ss2.Systems["engine"])
+		log.Println(ss1.Systems["engine"])
+		log.Println(ss2.Systems["engine"])
 		t.Fail()
 	}
 }

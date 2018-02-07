@@ -1,5 +1,7 @@
 package spacegame
 
+import "sync"
+
 type Scene interface {
 	Render()
 	tick(float64)
@@ -13,6 +15,12 @@ type SpaceScene struct {
 	playerShip *Ship
 	entities   []Entity
 	starscape  Background
+}
+
+// TODO: Celestials isn't an interface... hmm..
+type SceneInformation struct {
+	Entities   []Entity
+	Celestials []*Celestial
 }
 
 func NewSpaceScene(system *SolarSystem, player *Player, renderer Renderer) *SpaceScene {
@@ -37,24 +45,20 @@ func (ss *SpaceScene) Render() {
 	// Starscape
 	ss.starscape.Render()
 
-    // Directional arrow TODO
+	// Directional arrow TODO
 
 	// Render any planets in this scene
 	for _, celestial := range ss.system.Celestials() {
 		ss.camera.Render(ss.renderer, celestial)
 	}
 
-    // Asteroids (if any) TODO
+	// Asteroids (if any) TODO
 
+	// Friendly players/NPCs TODO
 
-    // Friendly players/NPCs TODO
+	// Projectiles TODO
 
-
-    // Projectiles TODO
-
-
-    // Neutral or enemy players/NPCs TODO
-
+	// Neutral or enemy players/NPCs TODO
 
 	// Render the player's ship last, in the middle
 	ss.renderer.Render(ss.playerShip, ss.renderer.Center())
@@ -66,15 +70,24 @@ func (ss *SpaceScene) tick(dt float64) {
 	// TODO: Beware dragons... hehe, learning opportunity
 	go ss.starscape.Displace(dt)
 
+	si := SceneInformation{
+		Celestials: ss.system.Celestials(),
+		Entities:   ss.entities,
+	}
 
+	var wg sync.WaitGroup
 	for _, entity := range ss.entities {
-        // all pilotable ships get updated
-        if ship, ok := entity.(PilotableShip) ; ok {
-            _ = ship
-            // ship.Update()
-        }
+		// all pilotable ships get updated
+		if ship, ok := entity.(PilotableShip); ok {
+			wg.Add(1)
+			go func(s PilotableShip) {
+				defer wg.Done()
+				s.Update(si)
+			}(ship)
+		}
 
-        // Everything gets translated by its velocity
+		// Everything gets translated by its velocity
 		entity.Translate(entity.Velocity())
 	}
+	wg.Wait()
 }
