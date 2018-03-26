@@ -3,7 +3,7 @@
     "Celestials": [
         {
             "Name": "Vera",
-            "Position": {
+            "Coordinates": {
                 "X": 300,
                 "Y": 200
             },
