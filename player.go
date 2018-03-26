@@ -12,7 +12,10 @@ type Player struct {
 // Creates a new player with the specified name
 // The player is assigned a Starbridge and 10000 credits
 func NewPlayer(name string, resourceManager ResourceManager) *Player {
-	ship := NewShip("Starbridge")
+	ship, err := LoadShip("resources/entities/ships/Starbridge.json")
+	if err != nil {
+		panic(err)
+	}
 
 	player := &Player{
 		name:    name,
@@ -29,15 +32,15 @@ func (p *Player) Name() string {
 }
 
 func (p *Player) Ship() *Ship {
-    var (
-        ship *Ship
-        ok bool
-    )
-    if ship, ok = p.ship.(*Ship); !ok {
-        panic("Wrong type for player ship")
-        return nil
-    }
-    return ship
+	var (
+		ship *Ship
+		ok   bool
+	)
+	if ship, ok = p.ship.(*Ship); !ok {
+		panic("Wrong type for player ship")
+		return nil
+	}
+	return ship
 }
 
 func (p *Player) CmdChan() chan pilotAction {
@@ -56,8 +59,8 @@ func (p *Player) tick() {
 
 func (p *Player) Process(a pilotAction) {
 	switch a.key {
-    default:
-        fmt.Printf("Processing action %v\n", a)
-        p.ship.Process(a)
+	default:
+		fmt.Printf("Processing action %v\n", a)
+		p.ship.Process(a)
 	}
 }

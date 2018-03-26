@@ -86,6 +86,8 @@ func (se ShipEngine) Activate(command pilotAction) {
 		se.Turn(command.dt)
 	case actionTurnRight:
 		se.Turn(-command.dt)
+	case actionReverse:
+		se.reverse(command.dt)
 	}
 }
 
@@ -98,29 +100,47 @@ func (se *ShipEngine) Update(info SceneInformation) {
 	// No action necessary
 }
 
-func (se ShipEngine) Align(target Entity, dt float64) {
+func (se *ShipEngine) Align(target Entity, dt float64) {
 	if target == nil {
 		return
 	}
-	log.Println("Want to align to", target.Name())
 	location := se.ship.Coordinates()
 	destination := target.Coordinates()
-	direction := location.Add(destination)
+	log.Printf("Want to align to %s at %v from %v", target.Name(), target.Coordinates(), location)
+	direction := location.Sub(destination)
 	targetAngle := math.Atan2(direction.Y, direction.X)
-	targetAngle = targetAngle*180/math.Pi + 270
-	deltaAngle := targetAngle - se.ship.Angle()
-	if deltaAngle > 1 {
+	se.align(targetAngle, dt)
+}
+
+func (se *ShipEngine) align(angle float64, dt float64) {
+	// For now: Close enough, don't align more accurately
+	const deadZone = 0.05
+	// rotate so zero is upwards
+	angle = angle + math.Pi/2
+	log.Println("trying to align towards", angle, "; current:", se.ship.Angle())
+	// should be easy, make the ship's angle go towards param angle
+	// get difference
+	deltaAngle := normalizeAngle(se.ship.Angle() - angle)
+	// TODO: Make better engines align better
+	if deltaAngle < -deadZone {
 		se.Turn(dt)
-	} else if deltaAngle < -1 {
+	} else if deltaAngle > deadZone {
 		se.Turn(-dt)
 	}
-	// Close enough, don't align more accurately
-	// TODO: Make better engines align better
+}
+
+func (se *ShipEngine) reverse(dt float64) {
+	// naive reverse, turn around or do nothing
+
+	// ship's angle should go towards the inverse of its velocity
+	targetAngle := normalizeAngle(se.ship.Velocity().Angle() + 2*math.Pi)
+	se.align(targetAngle, dt)
 }
 
 func (se ShipEngine) Turn(dt float64) {
-	angle := se.TurnSpeed * dt
-	se.ship.angle += angle
+	angle := se.ship.angle + se.TurnSpeed*dt
+
+	se.ship.angle = normalizeAngle(angle)
 }
 
 func (se ShipEngine) Accelerate(dt float64) {
@@ -133,28 +153,34 @@ func (se ShipEngine) Accelerate(dt float64) {
 	se.ship.velocity = vel
 }
 
-// TODO: quality (see colors? see sizes?), interference
+// TODO: Interface!!
+// TODO: quality (see colors? see sizes?), interference, range
 // TODO: States (hostile, neutral, escort, fighter)
 type ShipScanner struct {
 	Accuracy       float64
 	Range          float64
 	targets        []Entity
-	celestials     []*Celestial
+	celestials     []Celestial
 	selectedTarget Entity
-	selectedCelest *Celestial
+	selectedCelest Celestial
 }
 
 func (sc ShipScanner) Name() string {
 	return "scanner"
 }
-func (sc ShipScanner) Activate(command pilotAction) {
+func (sc *ShipScanner) Activate(command pilotAction) {
 	log.Println("scanner activate", command)
 	switch command.key {
 	case actionTargetPrev:
 		sc.PrevTarget()
 	case actionTargetNext:
 		sc.NextTarget()
-	case actionTargetCelestial:
+
+	case actionClearTarget:
+		sc.ClearTarget()
+
+	case actionLand:
+		// The ship wants to land. A good scanner would target the nearest celestial...
 		sc.NextCelestial()
 	}
 }
@@ -163,17 +189,23 @@ func (sc ShipScanner) Install(ship *Ship) {
 	log.Println("scanner installed on ship", ship.name)
 }
 
-func (sc ShipScanner) Update(info SceneInformation) {
+func (sc *ShipScanner) Update(info SceneInformation) {
 	sc.targets = info.Entities
 	sc.celestials = info.Celestials
 }
 
-func (sc ShipScanner) Celestial() Entity {
+func (sc *ShipScanner) Celestial() Celestial {
+	if sc.selectedCelest == nil {
+		return nil
+	}
 	return sc.selectedCelest
 }
 
-func (sc ShipScanner) NextCelestial() {
+// TODO: Cycle UNLESS we have no target, then land at the nearest.
+// "Clear Target" action should be required to have no target unless the pilot just entered the system.
+func (sc *ShipScanner) NextCelestial() {
 	if len(sc.celestials) == 0 {
+		log.Println("no celestials")
 		return
 	}
 	if sc.selectedCelest == nil {
@@ -193,11 +225,21 @@ func (sc ShipScanner) NextCelestial() {
 	sc.selectedCelest = nil
 }
 
-func (sc ShipScanner) Target() Entity {
+func (sc *ShipScanner) Target() Entity {
 	return sc.selectedTarget
 }
 
-func (sc ShipScanner) nextTarget(delta int) Entity {
+func (sc *ShipScanner) ClearTarget() {
+	// clear ship
+	if sc.selectedTarget != nil {
+		sc.selectedTarget = nil
+	} else {
+		// no ship? clear celestial
+		sc.selectedCelest = nil
+	}
+}
+
+func (sc *ShipScanner) nextTarget(delta int) Entity {
 	// check if we have something targetted first
 	if sc.selectedTarget == nil {
 		// target the 'first' thing
@@ -229,18 +271,18 @@ func (sc ShipScanner) nextTarget(delta int) Entity {
 
 }
 
-func (sc ShipScanner) PrevTarget() {
+func (sc *ShipScanner) PrevTarget() {
 	sc.selectedTarget = sc.nextTarget(-1)
 }
 
-func (sc ShipScanner) NextTarget() {
+func (sc *ShipScanner) NextTarget() {
 	sc.selectedTarget = sc.nextTarget(1)
 }
 
 func DefaultShipEngine() *ShipEngine {
 	return &ShipEngine{
 		Acceleration: 3.0,
-		MaxVel:       200.0,
+		MaxVel:       1.0,
 		TurnSpeed:    3.0,
 	}
 }

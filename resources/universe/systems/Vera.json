@@ -4,8 +4,8 @@
         {
             "Name": "Vera",
             "Position": {
-                "X": 30,
-                "Y": 60
+                "X": 300,
+                "Y": 200
             },
             "ImagePath": "images/planets/planet27.png",
             "Radius": 64

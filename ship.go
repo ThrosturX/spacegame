@@ -18,7 +18,7 @@ type PilotableShip interface {
 
 type Ship struct {
 	name        string
-	angle       float64
+	angle       float64 // Radians
 	coordinates pixel.Vec
 	velocity    pixel.Vec
 	bounds      pixel.Rect
@@ -164,16 +164,25 @@ func (s *Ship) ActivateSystem(system string, command pilotAction) {
 // TODO: Refactor
 func (s *Ship) Process(a pilotAction) {
 	switch a.key {
-	case actionAccel:
-		fallthrough
-	case actionTurnLeft:
-		fallthrough
-	case actionTurnRight:
+	case actionAccel, actionReverse, actionTurnLeft, actionTurnRight:
 		s.ActivateSystem("engine", a)
 
-	case actionTargetCelestial:
-		fallthrough
-	case actionTargetNext:
+	case actionLand:
+		// if celestial is targeted
+		scanner, ok := s.systems["scanner"].(*ShipScanner)
+		if !ok {
+			return
+		}
+		target := scanner.Celestial()
+		if target == nil {
+			// No target, scan for a target
+			s.ActivateSystem("scanner", a)
+		} else {
+			// try to land
+			target.Land(s) // TODO: Maybe return something that can be shown to the pilot
+
+		}
+	case actionTargetNext, actionTargetPrev, actionClearTarget:
 		s.ActivateSystem("scanner", a)
 
 	case actionAlign:
@@ -198,18 +207,36 @@ func (s *Ship) Process(a pilotAction) {
 			target = scanner.Celestial()
 			log.Println("TARGET", target, "target was nil")
 		}
-		if target == (*Celestial)(nil){
+		if target == nil {
 			log.Println("NO TARGET")
 			return // nothing to align to // TODO: Maybe align to sun/origin?
 		}
 		log.Println("TARGET", target)
 		engine.Align(target, a.dt)
-		log.Println("Found target", (target).Name(), "at", (target).Coordinates())
 	}
 }
 
+// TODO: Maybe supply selfIndex with Update method for optimization
 func (s *Ship) Update(info SceneInformation) {
+	// Create a special SceneInformation that doesn't include "this ship"
+	entities := info.Entities
+	var selfIndex int = -1
+	var elen int = len(entities)
+	for i, _ := range entities {
+		if entities[i] == s {
+			selfIndex = i
+			break
+		}
+	}
+	if selfIndex >= 0 {
+		entities[selfIndex] = entities[elen-1] // place self at the end
+		entities = entities[:elen-1]           // chop off the end
+	}
+	si := SceneInformation{
+		Celestials: info.Celestials,
+		Entities:   entities,
+	}
 	for _, sys := range s.systems {
-		sys.Update(info)
+		sys.Update(si)
 	}
 }

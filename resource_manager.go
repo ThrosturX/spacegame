@@ -5,12 +5,15 @@ package spacegame
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/faiface/pixel"
+	"github.com/golang/freetype/truetype"
+	"golang.org/x/image/font"
 )
 
 type Resource struct {
@@ -86,8 +89,8 @@ func (srm *StandardResourceManager) FindInCollection(collection string) []Resour
 		}
 	}
 
-//	log.Println("Created this beautiful collection for", collection)
-//	log.Println(matched)
+	//	log.Println("Created this beautiful collection for", collection)
+	//	log.Println(matched)
 	return matched
 }
 
@@ -100,7 +103,7 @@ func (srm *StandardResourceManager) ImportDefault() {
 	shipImporter := func(path string, info os.FileInfo, err error) error {
 		// fail on error
 		if err != nil {
-            log.Println("err!")
+			log.Println("err!")
 			return err
 		}
 
@@ -135,7 +138,7 @@ func (srm *StandardResourceManager) ImportDefault() {
 
 		srm.resources[name] = resource
 
-//		log.Println("Imported", name)
+		//		log.Println("Imported", name)
 
 		return nil
 	}
@@ -174,11 +177,11 @@ func (srm *StandardResourceManager) ImportDefault() {
 			resource := srm.createResource(pic, c)
 			resource.collection = collection
 
-			srm.resources[c.name] = resource
-//			log.Println("Imported", c.name)
+			srm.resources[c.Name()] = resource
+			//			log.Println("Imported", c.name)
 		}
 
-//		log.Println("Imported", sys.name)
+		//		log.Println("Imported", sys.name)
 
 		return nil
 	}
@@ -206,7 +209,7 @@ func (srm *StandardResourceManager) ImportDefault() {
 		}
 
 		// create the entity
-		entity := NewBasicEntity(name, pic.Bounds())
+		entity := NewBaseEntity(name, pic.Bounds())
 
 		// create the resource
 		resource := srm.createResource(pic, entity)
@@ -214,7 +217,7 @@ func (srm *StandardResourceManager) ImportDefault() {
 
 		srm.resources[name] = resource
 
-//		log.Println("Imported", name)
+		//		log.Println("Imported", name)
 
 		return nil
 	}
@@ -260,4 +263,27 @@ func (srm *StandardResourceManager) createResource(pic pixel.Picture, entity Ent
 		sprite: pixel.NewSprite(pic, pic.Bounds()),
 		rect:   pic.Bounds(),
 	}
+}
+
+func loadTTF(path string, size float64) (font.Face, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	bytes, err := ioutil.ReadAll(file)
+	if err != nil {
+		return nil, err
+	}
+
+	font, err := truetype.Parse(bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return truetype.NewFace(font, &truetype.Options{
+		Size:              size,
+		GlyphCacheEntries: 1,
+	}), nil
 }

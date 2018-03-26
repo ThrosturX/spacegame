@@ -7,6 +7,7 @@ import (
 )
 
 func run() {
+    // TODO: Start menu that creates the engine
 	gameEngine := spacegame.NewGame()
 	gameEngine.Run()
 }

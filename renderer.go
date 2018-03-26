@@ -1,10 +1,14 @@
 package spacegame
 
 import (
+	"fmt"
+
 	"golang.org/x/image/colornames"
+	"golang.org/x/image/font/basicfont"
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
+	"github.com/faiface/pixel/text"
 )
 
 // This may be a prototype for a "subwindow" interface...
@@ -14,18 +18,22 @@ type Renderer interface {
 	Clear()
 	Render(renderable Entity, position pixel.Vec)
 	ResourceManager() ResourceManager
+	Text(txt string, position pixel.Vec) error
 	Update()
 }
 
 type PixelWindowRenderer struct {
 	window          *pixelgl.Window
 	resourceManager ResourceManager
+	atlas           *text.Atlas
 }
 
 func NewPixelWindowRenderer(window *pixelgl.Window, resourceManager ResourceManager) *PixelWindowRenderer {
+	atlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
 	return &PixelWindowRenderer{
 		window:          window,
 		resourceManager: resourceManager,
+		atlas:           atlas,
 	}
 }
 
@@ -65,6 +73,17 @@ func (pwr *PixelWindowRenderer) Render(renderable Entity, position pixel.Vec) {
 
 func (pwr *PixelWindowRenderer) ResourceManager() ResourceManager {
 	return pwr.resourceManager
+}
+
+func (pwr *PixelWindowRenderer) Text(s string, position pixel.Vec) error {
+	txt := text.New(position, pwr.atlas)
+	_, err := fmt.Fprintln(txt, s)
+	if err != nil {
+		return err
+	}
+
+	txt.Draw(pwr.window, pixel.IM)
+    return nil
 }
 
 func (pwr *PixelWindowRenderer) Update() {

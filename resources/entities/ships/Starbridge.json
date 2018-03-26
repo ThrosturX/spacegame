@@ -6,9 +6,16 @@
         "engine": {
             "Type": "engine",
             "System": {
-                "Acceleration": 3,
-                "MaxVel": 200,
-                "TurnSpeed": 3
+                "Acceleration": 6,
+                "MaxVel": 10,
+                "TurnSpeed": 5
+            }
+        },
+        "scanner": {
+            "Type": "scanner",
+            "System": {
+                "Accuracy": 100,
+                "Range": 300000
             }
         }
     }

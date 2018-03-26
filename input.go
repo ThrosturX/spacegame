@@ -9,14 +9,15 @@ import (
 )
 
 const (
-	actionAccel           = "accel"
-	actionTurnLeft        = "left"
-	actionTurnRight       = "right"
-	actionReverse         = "reverse"
-    actionAlign           = "align"
-	actionTargetPrev      = "targetPrev"
-	actionTargetNext      = "targetNext"
-	actionTargetCelestial = "targetCelestial"
+	actionAccel       = "accel"
+	actionTurnLeft    = "left"
+	actionTurnRight   = "right"
+	actionReverse     = "reverse"
+	actionAlign       = "align"
+	actionTargetPrev  = "targetPrev"
+	actionTargetNext  = "targetNext"
+	actionLand        = "targetLand"
+	actionClearTarget = "clearTarget"
 )
 
 type Controllable interface {
@@ -50,7 +51,8 @@ func NewPlayerController(window *pixelgl.Window, entity Controllable) *Controlle
 	c.repeaters[actionReverse] = true
 	c.repeaters[actionTargetPrev] = false
 	c.repeaters[actionTargetNext] = false
-	c.repeaters[actionTargetCelestial] = false
+	c.repeaters[actionLand] = false
+    c.repeaters[actionClearTarget] = false
 
 	return c
 }
@@ -94,5 +96,6 @@ func (c *Controller) ResetBindings() {
 	c.SetKey(pixelgl.KeyTab, actionTargetNext)
 	//	c.SetKey(pixelgl._, actionTargetPrev)
 	c.SetKey(pixelgl.KeyA, actionAlign)
-	c.SetKey(pixelgl.KeyL, actionTargetCelestial)
+	c.SetKey(pixelgl.KeyL, actionLand)
+    c.SetKey(pixelgl.KeyC, actionClearTarget)
 }

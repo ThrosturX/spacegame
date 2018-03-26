@@ -93,6 +93,6 @@ func (ge *GameEngine) Run() {
 
 func (ge *GameEngine) tick(dt float64) {
 	// Check key events and update game state
-    go ge.player.tick() // TODO: Move to scene, send scene info as parameter or otherwise find way to give player a context
+	go ge.player.tick() // TODO: Move to scene, send scene info as parameter or otherwise find way to give player a context
 	ge.scene.tick(dt)
 }

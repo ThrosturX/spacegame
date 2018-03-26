@@ -3,6 +3,7 @@ package spacegame
 import "github.com/faiface/pixel"
 
 // TODO: Rotate(float64), replaces Turn for Ship etc.
+// An Entity describes a
 type Entity interface {
 	Name() string
 	Angle() float64
@@ -12,15 +13,15 @@ type Entity interface {
 	Translate(pixel.Vec)
 }
 
-type BasicEntity struct {
+type BaseEntity struct {
 	name        string
 	angle       float64
 	coordinates pixel.Vec
 	bounds      pixel.Rect
 }
 
-func NewBasicEntity(name string, rect pixel.Rect) *BasicEntity {
-	entity := BasicEntity{
+func NewBaseEntity(name string, rect pixel.Rect) *BaseEntity {
+	entity := BaseEntity{
 		name:        name,
 		angle:       0.0,
 		coordinates: pixel.ZV,
@@ -30,26 +31,26 @@ func NewBasicEntity(name string, rect pixel.Rect) *BasicEntity {
 	return &entity
 }
 
-func (be BasicEntity) Name() string {
+func (be BaseEntity) Name() string {
 	return be.name
 }
 
-func (be BasicEntity) Angle() float64 {
+func (be BaseEntity) Angle() float64 {
 	return be.angle
 }
 
-func (be BasicEntity) Bounds() pixel.Rect {
+func (be BaseEntity) Bounds() pixel.Rect {
 	return be.bounds
 }
 
-func (be BasicEntity) Coordinates() pixel.Vec {
+func (be BaseEntity) Coordinates() pixel.Vec {
 	return be.coordinates
 }
 
-func (be BasicEntity) Velocity() pixel.Vec {
+func (be BaseEntity) Velocity() pixel.Vec {
 	return pixel.ZV
 
 }
-func (be BasicEntity) Translate(vec pixel.Vec) {
+func (be BaseEntity) Translate(vec pixel.Vec) {
 	be.coordinates = be.coordinates.Add(vec)
 }

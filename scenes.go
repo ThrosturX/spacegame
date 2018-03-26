@@ -1,6 +1,11 @@
 package spacegame
 
-import "sync"
+import (
+	"fmt"
+	"sync"
+
+	"github.com/faiface/pixel"
+)
 
 type Scene interface {
 	Render()
@@ -20,7 +25,7 @@ type SpaceScene struct {
 // TODO: Celestials isn't an interface... hmm..
 type SceneInformation struct {
 	Entities   []Entity
-	Celestials []*Celestial
+	Celestials []Celestial
 }
 
 func NewSpaceScene(system *SolarSystem, player *Player, renderer Renderer) *SpaceScene {
@@ -61,7 +66,17 @@ func (ss *SpaceScene) Render() {
 	// Neutral or enemy players/NPCs TODO
 
 	// Render the player's ship last, in the middle
-	ss.renderer.Render(ss.playerShip, ss.renderer.Center())
+	ss.camera.Render(ss.renderer, ss.playerShip)
+
+	// Very basic HUD 
+    // Make it better TODO: The ship "renders" the HUD! And can therefore respond appropriately to stimuli -- needs some engineering
+    pos := ss.playerShip.Coordinates()
+	hudTxt := fmt.Sprintf("Position: %.0f, %.0f\nVelocity: %4.2f", pos.X, pos.Y, ss.playerShip.Velocity().Len())
+	ss.renderer.Text(hudTxt, pixel.V(30, 30))
+
+    // Get HUD elements from player's ship
+
+    // Apply HUD elements' renderer methods
 
 	ss.renderer.Update()
 }
