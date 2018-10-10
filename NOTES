@@ -1,0 +1,13 @@
+# Spacegame notes
+
+# TODO:
+
+- Fix angle fiasco. 
+
+## Resource Manager
+
+The resource manager should be able to automatically determine the path of an Entity based on the Entity's `name`, along with the entity's "Actor".
+I'm debating whether or not this is a good idea. On the one hand, this simplifies some things. On the other hand, there would need to be a workaround for Entities with custom names. I think we can do this by displaying a special name, other than `name` in-game, while allowing all entities of the same kind to share the same base path. Really this just defers work until later. Let's see how it goes.
+
+Actually it's a bad idea, because then we have to add complexity for what kind of resource it is already. It's easier to just connect all entities for now. Later we can do it procedurally.
+
