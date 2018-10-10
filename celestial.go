@@ -6,7 +6,7 @@ type Celestial interface {
 	Entity
 	ImagePath() string
 	Radius() float64
-    Land(ship *Ship) bool // Returns true if the ship was successfully docked with the celestial
+	Land(ship *Ship) bool // Returns true if the ship was successfully docked with the celestial
 }
 
 // A Celestial is an Entity that can be selected and potentially allows ships to land/dock
@@ -20,13 +20,13 @@ type BaseCelestial struct {
 }
 
 func NewCelestial(name, imagePath string, position pixel.Vec) Celestial {
-    return DockableCelestial{ // TODO: Return uninhabitable celestials by default, and wrap this
+	return DockableCelestial{ // TODO: Return uninhabitable celestials by default, and wrap this
 		BaseCelestial{
-            name:      name,
-            imagePath: imagePath,
-            position:  position,
-            radius:    64.0, // TODO: Get from imagePath? makes docking adaptive
-        },
+			name:      name,
+			imagePath: imagePath,
+			position:  position,
+			radius:    64.0, // TODO: Get from imagePath? makes docking adaptive
+		},
 	}
 }
 
@@ -63,29 +63,32 @@ func (c BaseCelestial) Translate(by pixel.Vec) {
 	c.position = c.position.Add(by)
 }
 
+// Dockables can be inhabited, or not.
+// If it is not inhabited, it can either be terraformed or colonized, based on whether or not it is hospitable or not.
 type DockableCelestial struct {
-    BaseCelestial
+	BaseCelestial
 }
 
 func (dc DockableCelestial) Land(ship *Ship) bool {
-    // If the player is in range
-    // TODO: Notify the game engine that the ship has landed so that a LandedScene can be rendered.
+	// If the player is in range
+	// TODO: Notify the game engine that the ship has landed so that a LandedScene can be rendered.
 
-    // No docking available until the LandedScene has been implemented
+	// No docking available until the LandedScene has been implemented
 
-    // Regardless, the player should receive "Docking granted" or "Docking requested" messages.
+	// Regardless, the player should receive "Docking granted" or "Docking requested" messages.
 
-    // The player is not in range
-    return false
+	// The player is not in range
+	return false
 }
 
 type CelestialCollection []Celestial
 
 type CelestialConfig struct {
-	Name      string
-	Coordinates  pixel.Vec
-	ImagePath string
-	Radius    float64
+	Name        string
+	Coordinates pixel.Vec
+	ImagePath   string
+	Radius      float64
+	Colony      Colony
 }
 
 func (cs CelestialCollection) Config() []CelestialConfig {
@@ -93,10 +96,10 @@ func (cs CelestialCollection) Config() []CelestialConfig {
 
 	for _, c := range cs {
 		config := CelestialConfig{
-			Name:      c.Name(),
-			ImagePath: c.ImagePath(),
-			Coordinates:  c.Coordinates(),
-			Radius:    c.Radius(),
+			Name:        c.Name(),
+			ImagePath:   c.ImagePath(),
+			Coordinates: c.Coordinates(),
+			Radius:      c.Radius(),
 		}
 		collection = append(collection, config)
 	}

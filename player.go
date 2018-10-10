@@ -12,7 +12,7 @@ type Player struct {
 // Creates a new player with the specified name
 // The player is assigned a Starbridge and 10000 credits
 func NewPlayer(name string, resourceManager ResourceManager) *Player {
-	ship, err := LoadShip("resources/entities/ships/Starbridge.json")
+	ship, err := LoadShip("data/resources/entities/ships/Starbridge.json")
 	if err != nil {
 		panic(err)
 	}

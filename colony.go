@@ -4,13 +4,39 @@ package spacegame
 // Optionally, colonies can produce goods which may affect trade price of commodities.
 type Colony interface {
 
-    // The location of the colony
-    Base() Celestial
+	// The location of the colony
+	Base() Celestial
 
-    // Get population count
-    Population() uint64
+	// The faction (clan) living in the colony
+	Faction() Faction
 
-    // TODO: Launch ships, or react to something
+	// Get population count
+	Population() uint64
+
+	// TODO: Launch ships, or react to something
 
 }
 
+// A clan inhabits a colony, so ClanColony implements its needs
+type ClanColony struct {
+	base       Celestial
+	faction    Faction
+	population uint64
+}
+
+// Add colonists (from a colonize mission)
+func (cc *ClanColony) AddColonists(number uint64) {
+	cc.population += number
+}
+
+func (cc *ClanColony) Base() Celestial {
+	return cc.base
+}
+
+func (cc *ClanColony) Faction() Faction {
+	return cc.faction
+}
+
+func (cc *ClanColony) Population() uint64 {
+	return cc.population
+}

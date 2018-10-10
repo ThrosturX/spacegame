@@ -42,7 +42,7 @@ func TestSerialization(t *testing.T) {
 // Tests entity <-> file relationship more thoroughly
 func TestShipSaveToFile(t *testing.T) {
 	// load the "Starbridge" ship
-	ship1, err := LoadShip("resources/entities/ships/Starbridge.json")
+	ship1, err := LoadShip("data/resources/entities/ships/Starbridge.json")
 	ship1 = NewShip("Starbridge")
 	if err != nil {
 		panic(err)
@@ -68,7 +68,7 @@ func TestShipSaveToFile(t *testing.T) {
 
 func TestSystemSaveToFile(t *testing.T) {
 	// load the "Vera" system
-	sys1, err := LoadSystem("resources/universe/systems/Vera.json")
+	sys1, err := LoadSystem("data/resources/universe/systems/Vera.json")
 	if err != nil {
 		panic(err)
 	}

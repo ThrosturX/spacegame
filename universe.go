@@ -14,7 +14,7 @@ func NewUniverse(rm ResourceManager) *Universe {
 
 	// TODO: This section comes from somewhere else
 	name := "Vera"
-	veraSystem, err := LoadSystem("resources/universe/systems/Vera.json")
+	veraSystem, err := LoadSystem("data/resources/universe/systems/Vera.json")
 	if err != nil {
 		panic(err) // TODO: Don't panic!
 	}

@@ -32,7 +32,7 @@ func NewGame() GameEngine {
 
 	window.SetSmooth(true)
 
-	resourceManager := NewStandardResourceManager("resources")
+	resourceManager := NewStandardResourceManager("data/resources")
 
 	universe := NewUniverse(resourceManager)
 

@@ -22,7 +22,6 @@ type SpaceScene struct {
 	starscape  Background
 }
 
-// TODO: Celestials isn't an interface... hmm..
 type SceneInformation struct {
 	Entities   []Entity
 	Celestials []Celestial
@@ -36,7 +35,7 @@ func NewSpaceScene(system *SolarSystem, player *Player, renderer Renderer) *Spac
 		playerShip: player.Ship(),
 		entities:   []Entity{player.Ship()},
 		renderer:   renderer,
-		starscape:  NewStarscape(renderer, camera),
+		starscape:  NewStarscape(renderer, camera, 0.2),
 	}
 }
 
@@ -67,6 +66,8 @@ func (ss *SpaceScene) Render() {
 
 	// Render the player's ship last, in the middle
 	ss.camera.Render(ss.renderer, ss.playerShip)
+
+    // Special effects, explosions
 
 	// Very basic HUD 
     // Make it better TODO: The ship "renders" the HUD! And can therefore respond appropriately to stimuli -- needs some engineering

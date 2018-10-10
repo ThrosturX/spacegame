@@ -225,6 +225,7 @@ func (srm *StandardResourceManager) ImportDefault() {
 	shipPath := fmt.Sprintf("%s/entities/ships", srm.basePath)
 	systemPath := fmt.Sprintf("%s/universe/systems", srm.basePath)
 	starPath := fmt.Sprintf("%s/images/stars", srm.basePath)
+	dustPath := fmt.Sprintf("%s/images/dust", srm.basePath)
 
 	var err error
 
@@ -242,6 +243,12 @@ func (srm *StandardResourceManager) ImportDefault() {
 
 	// import stars
 	err = filepath.Walk(starPath, entityImporter)
+	if err != nil {
+		panic(err)
+	}
+
+	// import dust
+	err = filepath.Walk(dustPath, entityImporter)
 	if err != nil {
 		panic(err)
 	}
